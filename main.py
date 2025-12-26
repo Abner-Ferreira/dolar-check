@@ -26,23 +26,23 @@ def get_dolar(retries=3, delay=5):
         try:
             response = api.get(url_api_dolar, timeout=10)
             response.raise_for_status()
-
             data = response.json()
 
             if "USDBRL" not in data:
-                raise ValueError(f"Resposta inesperada: {data}")
+                print("⚠️ Resposta inesperada:", data)
+                return None
 
-            dolar_price = Decimal(data["USDBRL"]["bid"])
-            return dolar_price.quantize(Decimal("0.00"), ROUND_HALF_UP)
+            return Decimal(data["USDBRL"]["bid"]).quantize(
+                Decimal("0.00"), ROUND_HALF_UP
+            )
 
-        except HTTPError as e:
-            if response.status_code == 429:
-                print(f"⚠️ Rate limit (tentativa {attempt + 1}/{retries})")
-                time.sleep(delay)
-            else:
-                raise
+        except Exception as e:
+            print(f"⚠️ Erro ao buscar dólar (tentativa {attempt+1}/{retries}): {e}")
+            time.sleep(delay)
 
-    raise RuntimeError("❌ Falha ao obter cotação após várias tentativas")
+    print("❌ Não foi possível obter a cotação hoje")
+    return None
+
 
 
 def read_price():
@@ -109,14 +109,16 @@ def send_message(old_price, current_price, type_of_message):
 
 def main():
     current_price = get_dolar()
-    old_price = read_price()
 
-    print(old_price)
-    save_price(6.57)
+    if current_price is None:
+        print("ℹ️ Execução finalizada sem atualizar preço")
+        return
+
+    old_price = read_price()
 
     if old_price is None:
         save_price(current_price)
-        print("Preço inicial salvo:", current_price)
+        print(f"Preço inicial salvo: {current_price}")
         return
 
     # Queda do dolar
