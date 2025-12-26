@@ -1,5 +1,5 @@
 from requests import api
-from requests.exceptions import RequestException, Timeout, ConnectionError
+from requests.exceptions import RequestException, Timeout, ConnectionError, HTTPError
 from decimal import Decimal, ROUND_HALF_UP
 from dotenv import load_dotenv
 import os
@@ -20,17 +20,28 @@ def get_connection():
     return psycopg2.connect(os.getenv("DATABASE_URL"), sslmode="require")
 
 
-def get_dolar():
-    response = api.get(url_api_dolar, timeout=10)
-    response.raise_for_status()
+def get_dolar(retries=3, delay=5):
+    for attempt in range(retries):
+        try:
+            response = api.get(url_api_dolar, timeout=10)
+            response.raise_for_status()
 
-    data = response.json()
+            data = response.json()
 
-    if "USDBRL" not in data:
-        raise ValueError(f"Resposta inesperada da API: {data}")
+            if "USDBRL" not in data:
+                raise ValueError(f"Resposta inesperada: {data}")
 
-    dolar_price = Decimal(data["USDBRL"]["bid"])
-    return dolar_price.quantize(Decimal("0.00"), ROUND_HALF_UP)
+            dolar_price = Decimal(data["USDBRL"]["bid"])
+            return dolar_price.quantize(Decimal("0.00"), ROUND_HALF_UP)
+
+        except HTTPError as e:
+            if response.status_code == 429:
+                print(f"⚠️ Rate limit (tentativa {attempt + 1}/{retries})")
+                time.sleep(delay)
+            else:
+                raise
+
+    raise RuntimeError("❌ Falha ao obter cotação após várias tentativas")
 
 
 def read_price():
