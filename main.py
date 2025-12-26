@@ -4,6 +4,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from dotenv import load_dotenv
 import os
 import psycopg2
+import time
 
 load_dotenv()
 
