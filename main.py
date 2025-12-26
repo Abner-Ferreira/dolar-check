@@ -9,7 +9,6 @@ load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TELEGRAM_TOKEN")
 CHAT_TOKEN = os.getenv("CHAT_TELEGRAM_TOKEN")
-FILE_PATH = os.getenv("FILE_PATH")
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 
