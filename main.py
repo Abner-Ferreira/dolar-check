@@ -21,8 +21,14 @@ def get_connection():
 
 
 def get_dolar():
-    response = api.get(url_api_dolar)
+    response = api.get(url_api_dolar, timeout=10)
+    response.raise_for_status()
+
     data = response.json()
+
+    if "USDBRL" not in data:
+        raise ValueError(f"Resposta inesperada da API: {data}")
+
     dolar_price = Decimal(data["USDBRL"]["bid"])
     return dolar_price.quantize(Decimal("0.00"), ROUND_HALF_UP)
 
@@ -109,9 +115,9 @@ def main():
     elif current_price > old_price:
         return send_message(old_price, current_price, "aumento")
 
-
     # Salva o preço no banco de dados
     save_price(current_price)
+
 
 if __name__ == "__main__":
     main()
