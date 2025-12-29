@@ -1,0 +1,30 @@
+name: Monitor Dólar
+
+on:
+  schedule:
+    - cron: "0 17 * * *" # 14h BRT
+    - cron: "0 21 * * *" # 18h BRT
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run monitor
+        env:
+          BOT_TELEGRAM_TOKEN: ${{ secrets.BOT_TELEGRAM_TOKEN }}
+          CHAT_TELEGRAM_TOKEN: ${{ secrets.CHAT_TELEGRAM_TOKEN }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: python main.py
